@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Study Tracker",
+  "version": "0.1.0",
+  "description": "Track YouTube study video views, last watched time, and notes locally.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://www.youtube.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "YouTube Study Tracker",
+    "default_popup": "popup.html"
+  }
+}
