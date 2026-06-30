@@ -1,7 +1,10 @@
 import {
+  DEFAULT_CHANNEL_NAME,
   DEFAULT_GENRE,
   DEFAULT_LANGUAGE,
   DEFAULT_PURPOSE,
+  type ChannelClassification,
+  type ChannelClassificationMap,
   type VideoRecord,
   type VideoRecordMap,
   type WatchSession
@@ -9,6 +12,7 @@ import {
 
 const STORAGE_KEY = "youtubeStudyTrackerRecords";
 const SESSION_STORAGE_KEY = "youtubeStudyTrackerSessions";
+const CHANNEL_CLASSIFICATION_STORAGE_KEY = "youtubeStudyTrackerChannelClassifications";
 
 // chrome.storage.local を Promise で扱えるようにする小さな補助関数です。
 function getFromStorage<T>(key: string): Promise<T | undefined> {
@@ -35,6 +39,7 @@ export async function getAllRecords(): Promise<VideoRecordMap> {
       {
         ...record,
         title: record.title ?? videoId,
+        channelName: record.channelName ?? DEFAULT_CHANNEL_NAME,
         totalWatchedSeconds: record.totalWatchedSeconds ?? 0,
         genre: record.genre ?? DEFAULT_GENRE,
         language: record.language ?? DEFAULT_LANGUAGE,
@@ -85,7 +90,14 @@ export async function updateClassification(
 }
 
 export async function getAllSessions(): Promise<WatchSession[]> {
-  return (await getFromStorage<WatchSession[]>(SESSION_STORAGE_KEY)) ?? [];
+  const sessions = (await getFromStorage<WatchSession[]>(SESSION_STORAGE_KEY)) ?? [];
+  return sessions.map((session) => ({
+    ...session,
+    channelName: session.channelName ?? DEFAULT_CHANNEL_NAME,
+    genre: session.genre ?? DEFAULT_GENRE,
+    language: session.language ?? DEFAULT_LANGUAGE,
+    purpose: session.purpose ?? DEFAULT_PURPOSE
+  }));
 }
 
 export async function addWatchSession(session: WatchSession): Promise<void> {
@@ -94,10 +106,30 @@ export async function addWatchSession(session: WatchSession): Promise<void> {
   await setToStorage(SESSION_STORAGE_KEY, sessions);
 }
 
+export async function getAllChannelClassifications(): Promise<ChannelClassificationMap> {
+  return (await getFromStorage<ChannelClassificationMap>(CHANNEL_CLASSIFICATION_STORAGE_KEY)) ?? {};
+}
+
+export async function saveChannelClassification(classification: ChannelClassification): Promise<void> {
+  const classifications = await getAllChannelClassifications();
+  classifications[classification.channelName] = classification;
+  await setToStorage(CHANNEL_CLASSIFICATION_STORAGE_KEY, classifications);
+}
+
+export async function deleteChannelClassification(channelName: string): Promise<void> {
+  const classifications = await getAllChannelClassifications();
+  delete classifications[channelName];
+  await setToStorage(CHANNEL_CLASSIFICATION_STORAGE_KEY, classifications);
+}
+
 export async function clearAllRecords(): Promise<void> {
   await setToStorage(STORAGE_KEY, {});
 }
 
 export async function clearAllSessions(): Promise<void> {
   await setToStorage(SESSION_STORAGE_KEY, []);
+}
+
+export async function clearAllChannelClassifications(): Promise<void> {
+  await setToStorage(CHANNEL_CLASSIFICATION_STORAGE_KEY, {});
 }
